@@ -1,15 +1,10 @@
-import  {Neuron, sigmoid, Weigth, generateNeurons, generateWeigths, Layer, Model} from "./lib/main.js"
-let n = 0
-function indexing() {
-    n++
-    return n
-}
-let lists = [generateNeurons(2, 0, 0, true, indexing), generateNeurons(16, 0, 0, true, indexing), generateNeurons(16, 0, 0, true, indexing), generateNeurons(1, 0, 0, true, indexing)]
-let weights = [generateWeigths(lists[0], lists[1], 0, true), generateWeigths(lists[1], lists[2], 0, true), generateWeigths(lists[2], lists[3], 0, true)]
-let starting = new Layer(lists[0], [], weights[0])
-let first = new Layer(lists[1], weights[0], weights[1])
-let second = new Layer(lists[2], weights[1], weights[2])
-let last = new Layer(lists[3], weights[2], [])
-let model = new Model([starting, first, second, last])
-let list = model.execute([1, 3])
-list[0].verbose()
+import  {Neuron, sigmoid, Weigth, Layer, Model, sameSet, Vector, Matrix, xavier, generateModel, matrixMultiplication, matrixAddition, vectorElementMultiplication, weigthMatrixes, vectorAddition, readGradientsMatrixes, averageMatrix, generateInputs} from "./lib/main.js"
+import { clear, push, readFile,  readGradients,  writeGradients} from "./data/main.js"
+let a = new Matrix(2, [new Vector(2,[5,8]),new Vector(2,[9,2])])
+let b = new Matrix(2, [new Vector(2, [4, 1]), new Vector(2, [3, 2])])
+let vecA = new Vector(2, [2, 4])
+let vecB = new Vector(2, [2, 2,])
+let model = generateModel(4, [4, 16, 16, 1])
+let data = generateInputs(4, 800)
+
+model.train(10, 8, data[0], data[1], 0.01)
