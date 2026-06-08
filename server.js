@@ -1,5 +1,6 @@
 import { input } from "./data/main.js"
-import  {Neuron, sigmoid, Weigth, Layer, Model, sameSet, Vector, Matrix, xavier, generateModel, matrixMultiplication, matrixAddition, vectorElementMultiplication, weigthMatrixes, vectorAddition, averageMatrix, generateInputs, loadModel} from "./lib/main.js"
+import  { sigmoid, Layer, Model, sameSet, Vector, Matrix, xavier, generateModel, matrixMultiplication, matrixAddition, vectorElementMultiplication, vectorAddition, averageMatrix, generateInputs, matrixSubtraction} from "./lib/main.js"
+/*
 let exit = false
     let model;
 function training(list) {
@@ -62,3 +63,16 @@ while (!exit) {
             console.log("sybau")
     }
 }
+    */
+function average (list) {
+    let sum = 0
+    for (let el of list) {
+        sum += el
+
+    }
+    return [sum / list.length]
+}
+let model = generateModel(4, [2, 3, 3, 1])
+let data = generateInputs(2, 1000,average)
+model.train(1000,10,data[0], data[1], 0.005)
+model.test(2, average, 100)
