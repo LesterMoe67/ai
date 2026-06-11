@@ -1,5 +1,3 @@
-import { getModel } from "../data/main.js"
-import { saveModel } from "../data/main.js"
 export function sigmoid(n) {
     return 1 / ( 1 + Math.pow(Math.E, -n))
 }
@@ -366,8 +364,8 @@ export class Model {
         console.log(this.layers[this.layers.length - 1].activation.rows[0])
         
     }
-    test(inputSize,func, tests) {
-        let data = generateInputs(inputSize, tests, func)
+    test(func, tests) {
+        let data = generateInputs(this.layers[0].biases.rows[0].length, tests, func)
         let acc = 0
         for (let i = 0; i < tests; i++) {
             this.forward(data[0][i])
@@ -375,7 +373,7 @@ export class Model {
             let err = Math.abs(data[1][i][0] - output) / data[1][i][0] * 100
             acc += 100 - err
         }
-        console.log((acc / tests ).toFixed(2)+ "%")
+        return (acc / tests ).toFixed(2)+ "%"
     }
     save (name) {
         let model = []
@@ -386,12 +384,12 @@ export class Model {
             list.push(typeof(layer.startingWeigths) == "undefined" ? undefined : layer.startingWeigths.rows)
             model.push(list)
         }
-        saveModel({"model" : model}, name)
+        return {"model" : model, "name" : name}
         
     }
 }
-export function loadModel(name) {
-    let obj = getModel(name).model
+export function loadModel(file) {
+    let obj = file.model
     let layers = []
     for (let layer of obj) {
         layers.push(new Layer(new Matrix(layer[0]), new Matrix(layer[2]), new Matrix(layer[1])))
@@ -442,4 +440,12 @@ export function sameSet(a, b) {
         if (!b.has(v)) return false;
     }
     return true;
+}
+export function average (list) {
+    let sum = 0
+    for (let el of list) {
+        sum += el
+
+    }
+    return [sum / list.length]
 }

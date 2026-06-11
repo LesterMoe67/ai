@@ -9,3 +9,6 @@ import PromptSync from "prompt-sync"
  export function input(string) {
     return PromptSync({autocomplete : [fs.readdirSync("./model").forEach((value) => {value.slice(0, value.length-5)})]})(string)
  }
+ export function deleteModel(name) {
+   fs.rmSync("./model/" + name + ".json")
+ }
