@@ -37,9 +37,6 @@ function draw() {
 }
 function drawPiece(piece) {
     let img = new Image()
-    img.addEventListener("click", () => {
-        console.log("clicked " + piece.color + " " + piece.type)
-    })
     img.onload = () => {
         ctx.drawImage(img, piece.coordinates[0]*80 + xOffset, piece.coordinates[1]*80 + yOffset)
 
@@ -49,8 +46,33 @@ function drawPiece(piece) {
 let pieces = fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 for (let peice of pieces) {
     drawPiece(peice)
-    if (peice.coordinates[0] ==  7&& peice.coordinates[1] == 7) {
-        console.log("error on", peice.type, peice.color)
+}
+
+function highlight(coords) {
+    let occupied = undefined
+    for (let piece of pieces) {
+        if (coords[0] == piece.coordinates[0] && coords[1] == piece.coordinates[1]) {
+            occupied = piece
+        }
+    }
+    if (typeof(occupied) == "undefined") {
+        let img = new Image()
+        img.onload = () => {
+            ctx.drawImage(img, coords[0] *80 + xOffset, coords[1]*80 + yOffset)
+            console.log("drew")
+        }
+        img.src = "./assets/red-" + ((coords[0] + coords[1]) % 2 == 0 ? "white" : "black")  + "-tile.png"
+        console.log(img.src)
+        
+    } else {
+        let img = new Image()
+        img.onload = () => {
+            ctx.drawImage(img, coords[0] *80 + xOffset, coords[1]*80 + yOffset)
+            console.log("drew")
+            drawPiece(occupied)
+        }
+        img.src = "./assets/red-" + ((coords[0] + coords[1]) % 2 == 0 ? "white" : "black")  + "-tile.png" 
+
     }
 }
 
@@ -65,14 +87,17 @@ function handleClick(x, y) {
         }
     }
 }
-    
 document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
 
     console.log("cliked at ", e.clientX,e.clientY, xOffset)
     let coords = handleClick(e.clientX, e.clientY)
     for (let piece of pieces) {
         if (piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) {
-            console.log("clikcked on", piece.color, piece.type)
+           let moves = piece.moves()
+           for (let c of moves) {
+            highlight(c)
+           }
         }
     }
+
 })
