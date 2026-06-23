@@ -2,6 +2,7 @@ import { fenToBoard } from "./lib/bot.js"
 import { Piece } from "./lib/classes.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
+let turn = "white"
 let xOffset = 1920/2 - 80*8/4*3
 let yOffset = 20
 let blackLoaded = false
@@ -23,6 +24,7 @@ white.onload = () => {
 }
 white.src = "./assets/white-tile.png"
 function draw() {
+    console.log("cleared")
     ctx.clearRect(0, 0, 1920, 800)
     for (let a = 0; a < 8; a++) {
         for (let b = 0; b < 8; b++) {
@@ -47,7 +49,6 @@ let pieces = fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 for (let peice of pieces) {
     drawPiece(peice)
 }
-
 function highlight(coords) {
     let occupied = undefined
     for (let piece of pieces) {
@@ -75,7 +76,25 @@ function highlight(coords) {
 
     }
 }
-
+function handleMove(pieces, coords, moving) {
+    let newList = []
+    for (let piece of pieces) {
+        if (!(piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) ) {
+            piece.toggled = false
+            newList.push(piece)
+        }
+        else {
+            console.log("eliminating", piece.color, piece.type)
+        }
+    }
+    console.log(newList)
+    moving.move(coords)
+    draw()
+    for (let piece of newList) {
+        drawPiece(piece)
+    }
+    return newList
+}
 function handleClick(x, y) {
     if ( x > xOffset && x < (xOffset + 8 * 80)) {
         if (y > yOffset && y < (yOffset + 8 * 80)) {
@@ -89,15 +108,28 @@ function handleClick(x, y) {
 }
 document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
 
-    console.log("cliked at ", e.clientX,e.clientY, xOffset)
     let coords = handleClick(e.clientX, e.clientY)
+    console.log("cliked at ",coords)
+
     for (let piece of pieces) {
         if (piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) {
-           let moves = piece.moves()
-           for (let c of moves) {
-            highlight(c)
-           }
+            piece.toggled = !piece.toggled
+        } else {
+            if (piece.toggled) {
+                for (let coord of piece.moves(pieces)) {
+                    if ((coord[0] == coords[0] && coord[1] == coords[1]) && turn == piece.color ) {
+                        pieces =  handleMove(pieces, coords, piece)
+                        if (turn == "white") {
+                            turn = "black"
+                        } else {
+                            turn = "white"
+                        }
+                    }
+                }
+            }
         }
     }
+
+
 
 })
