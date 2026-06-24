@@ -1,4 +1,4 @@
-import { fenToBoard } from "./lib/bot.js"
+import { fenToBoard, isCheck } from "./lib/bot.js"
 import { Piece } from "./lib/classes.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
@@ -24,7 +24,6 @@ white.onload = () => {
 }
 white.src = "./assets/white-tile.png"
 function draw() {
-    console.log("cleared")
     ctx.clearRect(0, 0, 1920, 800)
     for (let a = 0; a < 8; a++) {
         for (let b = 0; b < 8; b++) {
@@ -33,9 +32,17 @@ function draw() {
             } else {
                 ctx.drawImage(black, a*80 + xOffset, b*80 + yOffset)
             }
-            console.log(black.width, black.height, white.width, white.height)
         }
     }
+}
+function allMoves(pieces, color) {
+    let moves = []
+    for (let pezzo of pieces) {
+        if (pezzo.color == color) {
+            moves.push(pezzo.moves(pieces, true))
+        }
+    }
+    return moves.flat()
 }
 function drawPiece(piece) {
     let img = new Image()
@@ -45,7 +52,34 @@ function drawPiece(piece) {
     }
     img.src = "./assets/" + piece.color + "-" + piece.type + ".png"
 }
-let pieces = fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+function checkGame(pieces, turn) {
+    if (allMoves(pieces, turn).length == 0) {
+        let king;
+        let checkmate = false
+        for (let piece of pieces) {
+            if (piece.type == "king" && piece.color == turn) {
+                king = piece.coordinates
+            }
+        } 
+        for (let piece of pieces) {
+            if (piece.color != turn) {
+                let moves = piece.moves(pieces, true)
+                for (let move of moves) {
+                    if (move[0] == king[0] && move[1] == king[1]) {
+                        checkmate = true
+                    }
+                }
+            }
+                
+        }
+        if (checkmate) {
+            alert(turn +  " is checkmated")
+        } else {
+            alert("stalemate")
+        }
+    }
+}
+let pieces = fenToBoard("8/8/8/8/7k/7p/4q3/6K1 ")
 for (let peice of pieces) {
     drawPiece(peice)
 }
@@ -60,16 +94,13 @@ function highlight(coords) {
         let img = new Image()
         img.onload = () => {
             ctx.drawImage(img, coords[0] *80 + xOffset, coords[1]*80 + yOffset)
-            console.log("drew")
         }
         img.src = "./assets/red-" + ((coords[0] + coords[1]) % 2 == 0 ? "white" : "black")  + "-tile.png"
-        console.log(img.src)
         
     } else {
         let img = new Image()
         img.onload = () => {
             ctx.drawImage(img, coords[0] *80 + xOffset, coords[1]*80 + yOffset)
-            console.log("drew")
             drawPiece(occupied)
         }
         img.src = "./assets/red-" + ((coords[0] + coords[1]) % 2 == 0 ? "white" : "black")  + "-tile.png" 
@@ -83,11 +114,7 @@ function handleMove(pieces, coords, moving) {
             piece.toggled = false
             newList.push(piece)
         }
-        else {
-            console.log("eliminating", piece.color, piece.type)
-        }
     }
-    console.log(newList)
     moving.move(coords)
     draw()
     for (let piece of newList) {
@@ -109,21 +136,23 @@ function handleClick(x, y) {
 document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
 
     let coords = handleClick(e.clientX, e.clientY)
-    console.log("cliked at ",coords)
 
     for (let piece of pieces) {
         if (piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) {
             piece.toggled = !piece.toggled
         } else {
             if (piece.toggled) {
-                for (let coord of piece.moves(pieces)) {
+                console.log(isCheck(pieces, "white"))
+                for (let coord of piece.moves(pieces, true)) {
                     if ((coord[0] == coords[0] && coord[1] == coords[1]) && turn == piece.color ) {
                         pieces =  handleMove(pieces, coords, piece)
                         if (turn == "white") {
                             turn = "black"
                         } else {
                             turn = "white"
+
                         }
+                        checkGame(pieces, turn)
                     }
                 }
             }

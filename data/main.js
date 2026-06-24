@@ -1,4 +1,5 @@
 import * as fs from "fs" 
+import Papa from "papaparse"
 import PromptSync from "prompt-sync"
  export function saveModel(obj, name) {
     fs.writeFileSync("./model/" + name + ".json", JSON.stringify(obj), "utf8")
@@ -11,4 +12,7 @@ import PromptSync from "prompt-sync"
  }
  export function deleteModel(name) {
    fs.rmSync("./model/" + name + ".json")
+ }
+ export function readCsv(path) {
+   return Papa.parse(fs.readFileSync(path, "utf8"))
  }

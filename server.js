@@ -1,4 +1,4 @@
-import { deleteModel, input } from "./data/main.js"
+import { deleteModel, input, readCsv } from "./data/main.js"
 import  { sigmoid, Layer, Model, sameSet, Vector, Matrix, xavier, generateModel, matrixMultiplication, matrixAddition, vectorElementMultiplication, vectorAddition, averageMatrix, generateInputs, matrixSubtraction, loadModel} from "./lib/main.js"
 function average (list) {
     let sum = 0
@@ -8,8 +8,29 @@ function average (list) {
     }
     return [sum / list.length]
 }
-function xor (list) {
-    
+function digits () {
+    let inputs = []
+    let outputs = []
+    let database = readCsv("C:/Users/ADMIN/Downloads/MNIST_CSV/mnist_train.csv").data
+    for (let row of database) {
+        let input = []
+        let output = []
+        for (let i = 0; i < 10; i++) {
+            if (i == row[0]) {
+                input.push(1)
+            } else {
+                input.push(0)
+            }
+        }
+        for (let num of row.slice(1)) {
+            output.push(Number.parseInt(num) / 255)
+        } 
+        inputs.push(input)
+        outputs.push(output)
+    }
+    outputs.pop()
+    inputs.pop()
+    return [outputs, inputs]
 }
 let running = true
 let model = undefined
@@ -39,8 +60,10 @@ while (running) {
             let batchSize = Number.parseInt(input("batch size : "))
             let dataSetSize = Number.parseInt(input("dataset size : "))
             let learningRate = Number.parseFloat(input("learning rate : "))
-            let data = generateInputs(model.layers[0].biases.rows[0].length, dataSetSize, average)
+            let data = config.functio == digits ? digits() : generateInputs(model.layers[0].biases.rows[0].length, dataSetSize, average)
+            console.log("started")
             model.train(epochs, batchSize, data[0], data[1], learningRate)
+            console.log("ended")
             if (config.autosave) {
                 model.save(config.name)
             }
@@ -70,7 +93,7 @@ while (running) {
             break;
         case "test":
             let size = Number.parseInt(input("insert size: "))
-            model.test(model.layers[0].biases.rows[0].length, average, size)
+            model.test(model.layers[0].biases.rows[0].length, config.functio, size)
             break;
         case "config":
             let autosave = input("autosave : ") == "true"
@@ -79,13 +102,22 @@ while (running) {
                 config.name = name
 
             }
+            let functio = input("function : ")
+            if (functio == "mnist")  {
+                config.functio = digits
+            } else {
+                config.functio = average
+            }
             config.autosave = autosave
+
             break;
         case "delete":
             let namer = input("name : ")
             deleteModel(namer)
             break;
-        }
         
-
+        case "parse":
+            console.log(digits()[1][0])
+            break;
+    }
 }

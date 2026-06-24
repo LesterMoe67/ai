@@ -63,4 +63,21 @@ export function fenToBoard(string) {
     }
     return pieces
 }
+export function isCheck(pieces, color) {
+    let king;
+    for (let piece of pieces) {
+        if (piece.type == "king"  && piece.color == color) {
+            king = piece.coordinates
+        }
+    }
+    console.log(pieces)
+    for (let piece of pieces) {
+        for (let move of piece.moves(pieces)) {
+            if (move[0] == king[0] && move[1] == king[1]) {
+                return true
+            }
+        }
+    }
+    return false
+}
 //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR

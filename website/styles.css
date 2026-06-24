@@ -22,11 +22,21 @@ button {
     width: 140px;
   height: 52px;
   border-radius: 11px;
+  background-color: #303030;
+  border-color: #0f0f0f;
+  transition-property: all;
+  transition-duration: 200ms;
+}
+button:hover {
+    background-color: #242424;
+}
+button:active {
+    background-color: #111;
 }
 .parent {
     display: flex;
     flex-direction: row;
-    gap: 447px;
+    gap: 220px;
 }
 .text {
     font-family: "monospace";
@@ -44,4 +54,7 @@ button {
 }
 #acc {
     margin-top: 25px;
+}
+.middle {
+    margin-top: 230px;
 }
