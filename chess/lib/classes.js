@@ -495,3 +495,116 @@ export class Piece {
         this.hasMoved = true
     }
 } 
+export function compareCoordinates(coord1, coord2) {
+    return (coord1[0] == coord2[0] && coord1[1] == coord2[1])
+}
+export class Move {
+    constructor(type) {
+        this.type = type
+    }
+    resolve(movingPiece, board, starting, ending) {
+        if (this.type == "move") {
+            let found = false
+            let moves = movingPiece.moves(board,true) 
+            for (let move of moves) {
+                if (compareCoordinates(move, ending)) {
+                    found = true
+                    movingPiece.move(ending)
+                }
+            }
+            if (!found) {
+                console.log("illegal move")
+            }
+            return board
+        }
+        if (this.type == "capture") {
+            let captured = undefined
+            let newBoard = []
+            for (let piece of board) {
+                if (compareCoordinates(piece.coordinates, ending)) {
+                    captured = piece.coordinates
+                    console.log("not putting", piece.type, piece.color)
+                } else {
+                    console.log(ending, piece.coordinates)
+                    newBoard.push(piece)
+                }
+            }
+            for (let piece of newBoard) {
+                if (compareCoordinates(piece.coordinates, captured)) {
+                    console.log("piece not removed")
+                }
+            }
+            if (!(typeof(captured) == "undefined")) {
+                let legal = false
+                for (let move of movingPiece.moves(board, true)) {
+                    if (compareCoordinates(move, ending)) {
+                        legal = true
+                    }
+                }
+                for (let piece of newBoard) {
+                    if (compareCoordinates(piece.coordinates, captured)) {
+                        console.log("piece not removed")
+                    }
+                }
+                if (legal) {
+                    movingPiece.move(ending)
+                    for (let piece of newBoard) {
+                        if (compareCoordinates(piece.coordinates, captured)) {
+                            console.log("piece not removed", piece)
+                        }
+                    }
+                } else {
+                    console.log("illegal capture")
+                }
+            } else {
+                console.log("did not found captured piece")
+                console.log(captured)
+            }
+            for (let piece of newBoard) {
+                if (compareCoordinates(piece.coordinates, captured)) {
+                    console.log("piece not removed", piece)
+                }
+            }
+         return newBoard
+        }
+        if (this.type == "castle") {
+            if (compareCoordinates(ending, [6,7])) {
+                for (let piece of board) {
+                    if (compareCoordinates(piece.coordinates, [4, 7])) {
+                        piece.move([6, 7])
+                    } else if (compareCoordinates(piece.coordinates, [7, 7])) {
+                        piece.move([5,7])
+                    }
+                }
+            }
+            if (compareCoordinates(ending, [2,7])) {
+                for (let piece of board) {
+                    if (compareCoordinates(piece.coordinates, [4, 7])) {
+                        piece.move([2, 7])
+                    } else if (compareCoordinates(piece.coordinates, [0, 7])) {
+                        piece.move([3,7])
+                    }
+                }
+            }
+            if (compareCoordinates(ending, [6,0])) {
+                for (let piece of board) {
+                    if (compareCoordinates(piece.coordinates, [4, 0])) {
+                        piece.move([6, 0])
+                    } else if (compareCoordinates(piece.coordinates, [7, 0])) {
+                        piece.move([5,0])
+                    }
+                }
+            }
+            if (compareCoordinates(ending, [2,0])) {
+                for (let piece of board) {
+                    if (compareCoordinates(piece.coordinates, [4, 0])) {
+                        piece.move([2, 0])
+                    } else if (compareCoordinates(piece.coordinates, [0, 0])) {
+                        piece.move([3,0])
+                    }
+                }
+            }
+            return board
+        }
+    }
+}

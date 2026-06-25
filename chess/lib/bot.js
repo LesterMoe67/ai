@@ -65,9 +65,11 @@ export function fenToBoard(string) {
 }
 export function isCheck(pieces, color) {
     let king;
+    console.log(pieces)
     for (let piece of pieces) {
         if (piece.type == "king"  && piece.color == color) {
             king = piece.coordinates
+
         }
     }
     console.log(pieces)

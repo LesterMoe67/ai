@@ -1,5 +1,5 @@
 import { fenToBoard, isCheck } from "./lib/bot.js"
-import { Piece } from "./lib/classes.js"
+import { Piece, Move, compareCoordinates } from "./lib/classes.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 let turn = "white"
@@ -47,6 +47,7 @@ function allMoves(pieces, color) {
 function drawPiece(piece) {
     let img = new Image()
     img.onload = () => {
+        console.log("draw")
         ctx.drawImage(img, piece.coordinates[0]*80 + xOffset, piece.coordinates[1]*80 + yOffset)
 
     }
@@ -79,7 +80,7 @@ function checkGame(pieces, turn) {
         }
     }
 }
-let pieces = fenToBoard("8/8/8/8/7k/7p/4q3/6K1 ")
+let pieces = fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 for (let peice of pieces) {
     drawPiece(peice)
 }
@@ -107,18 +108,13 @@ function highlight(coords) {
 
     }
 }
-function handleMove(pieces, coords, moving) {
-    let newList = []
-    for (let piece of pieces) {
-        if (!(piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) ) {
-            piece.toggled = false
-            newList.push(piece)
-        }
-    }
-    moving.move(coords)
+function handleMove(move, piece, board, starting, ending) {
+    let newList = move.resolve(piece, board,starting, ending)
     draw()
     for (let piece of newList) {
         drawPiece(piece)
+        piece.toggled = false
+        console.log("sybau")
     }
     return newList
 }
@@ -139,13 +135,173 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
 
     for (let piece of pieces) {
         if (piece.coordinates[0] == coords[0] && piece.coordinates[1] == coords[1]) {
-            piece.toggled = !piece.toggled
+            piece.toggled = "true"
         } else {
             if (piece.toggled) {
-                console.log(isCheck(pieces, "white"))
+                console.log(piece)
+                if (piece.type == "king" && turn == piece.color) {
+
+                    if (piece.color == "white") {
+
+                        if (!piece.hasMoved) {
+
+                            if (compareCoordinates(coords, [6,7])) {
+                                let cond1 = false
+                                let cond2 = true
+                                console.log(pieces)
+                                for (let piece of pieces) {
+                                    if (piece.type == "rook" && piece.color == "white"  && (!piece.hasMoved) && (compareCoordinates(piece.coordinates,[7,7]))) {
+                                        cond1 = true
+                                    }
+                                    if (piece.type == "rook" && piece.color == "white") {
+                                        console.log((pieces.type == "rook" && piece.color == "white")  && (!piece.hasMoved))
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [6,7])) {
+                                        cond2 = false
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [5,7])) {
+                                        cond2 = false
+                                    }
+                                }
+                                console.log(pieces)
+                                if (!isCheck(pieces, "white") && cond2 && cond1) {
+                                    console.log("passed controls")
+                                    let move = new Move("castle")
+                                    pieces =  handleMove(move, piece, pieces, piece.coordinates, [6,7])
+                                    if (turn == "white") {
+                                        turn = "black"
+                                    } else {
+                                        turn = "white"
+
+                                    }
+                                    checkGame(pieces, turn)
+                                } else {
+                                    console.log(cond2, cond1)
+                                }
+
+                            }
+                            if (compareCoordinates(coords, [2,7])) {
+                                let cond1 = false
+                                let cond2 = true
+                                console.log(pieces)
+                                for (let piece of pieces) {
+                                    if (piece.type == "rook" && piece.color == "white"  && (!piece.hasMoved) && (compareCoordinates(piece.coordinates,[0,7]))) {
+                                        cond1 = true
+                                    }
+                                    if (piece.type == "rook" && piece.color == "white") {
+                                        console.log((pieces.type == "rook" && piece.color == "white")  && (!piece.hasMoved))
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [3,7])) {
+                                        cond2 = false
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [2,7])) {
+                                        cond2 = false
+                                    }
+                                }
+                                console.log(pieces)
+                                if (!isCheck(pieces, "white") && cond2 && cond1) {
+                                    console.log("passed controls")
+                                    let move = new Move("castle")
+                                    pieces =  handleMove(move, piece, pieces, piece.coordinates, [2,7])
+                                    if (turn == "white") {
+                                        turn = "black"
+                                    } else {
+                                        turn = "white"
+
+                                    }
+                                    checkGame(pieces, turn)
+                                } else {
+                                    console.log(cond2, cond1)
+                                }
+
+                            }  
+                        }
+                    } else {
+                        if (!piece.hasMoved) {
+
+                            if (compareCoordinates(coords, [6,0])) {
+                                let cond1 = false
+                                let cond2 = true
+                                console.log(pieces)
+                                for (let piece of pieces) {
+                                    if (piece.type == "rook" && piece.color == "black"  && (!piece.hasMoved) && (compareCoordinates(piece.coordinates,[7,0]))){
+                                        cond1 = true
+                                    }
+                                    if (piece.type == "rook" && piece.color == "black") {
+                                        console.log((pieces.type == "rook" && piece.color == "black")  && (!piece.hasMoved))
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [6,0])) {
+                                        cond2 = false
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [5,0])) {
+                                        cond2 = false
+                                    }
+                                }
+                                console.log(pieces)
+                                if (!isCheck(pieces, "black") && cond2 && cond1) {
+                                    console.log("passed controls")
+                                    let move = new Move("castle")
+                                    pieces =  handleMove(move, piece, pieces, piece.coordinates, [6,0])
+                                    if (turn == "white") {
+                                        turn = "black"
+                                    } else {
+                                        turn = "white"
+
+                                    }
+                                    checkGame(pieces, turn)
+                                } else {
+                                    console.log(cond2, cond1)
+                                }
+
+                            }
+                            if (compareCoordinates(coords, [2,0])) {
+                                let cond1 = false
+                                let cond2 = true
+                                console.log(pieces)
+                                for (let piece of pieces) {
+                                    if (piece.type == "rook" && piece.color == "black"  && (!piece.hasMoved) && (compareCoordinates(piece.coordinates,[0,0]))) {
+                                        cond1 = true
+                                    }
+                                    if (piece.type == "rook" && piece.color == "black") {
+                                        console.log((pieces.type == "rook" && piece.color == "black")  && (!piece.hasMoved))
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [3,0])) {
+                                        cond2 = false
+                                    }
+                                    if (compareCoordinates(piece.coordinates, [2,0])) {
+                                        cond2 = false
+                                    }
+                                }
+                                console.log(pieces)
+                                if (!isCheck(pieces, "black") && cond2 && cond1) {
+                                    console.log("passed controls")
+                                    let move = new Move("castle")
+                                    pieces =  handleMove(move, piece, pieces, piece.coordinates, [2,0])
+                                    if (turn == "white") {
+                                        turn = "black"
+                                    } else {
+                                        turn = "white"
+
+                                    }
+                                    checkGame(pieces, turn)
+                                } else {
+                                    console.log(cond2, cond1)
+                                }
+
+                            }  
+                        }
+                    }
+                } 
                 for (let coord of piece.moves(pieces, true)) {
-                    if ((coord[0] == coords[0] && coord[1] == coords[1]) && turn == piece.color ) {
-                        pieces =  handleMove(pieces, coords, piece)
+                    if (compareCoordinates(coord, coords)&& turn == piece.color ) {
+                        let take = false
+                        for (let peice of pieces) {
+                            if (compareCoordinates(coords, peice.coordinates)) {
+                                take = true
+                            }
+                        }
+                        let move = new Move(take ? "capture" : "move")
+                        pieces =  handleMove(move, piece, pieces, piece.coordinates, coords)
                         if (turn == "white") {
                             turn = "black"
                         } else {
@@ -153,6 +309,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
 
                         }
                         checkGame(pieces, turn)
+                        console.log(take)
                     }
                 }
             }
