@@ -1,5 +1,5 @@
 import { fenToBoard, isCheck } from "./lib/bot.js"
-import { Piece, Move, compareCoordinates } from "./lib/classes.js"
+import { Piece, Move, compareCoordinates, MoveList } from "./lib/classes.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 let turn = "white"
@@ -8,6 +8,7 @@ let yOffset = 20
 let blackLoaded = false
 let whiteLoaded = false
 let black = new Image(80 ,80)
+let movelist = new MoveList()
 black.onload= () => {
     blackLoaded = true
     if (whiteLoaded) {
@@ -35,11 +36,12 @@ function draw() {
         }
     }
 }
-function allMoves(pieces, color) {
+function allMoves(pieces, color, movelist) {
     let moves = []
+    console.log("allgame", movelist)
     for (let pezzo of pieces) {
         if (pezzo.color == color) {
-            moves.push(pezzo.moves(pieces, true))
+            moves.push(pezzo.moves(pieces, true, movelist))
         }
     }
     return moves.flat()
@@ -53,8 +55,8 @@ function drawPiece(piece) {
     }
     img.src = "./assets/" + piece.color + "-" + piece.type + ".png"
 }
-function checkGame(pieces, turn) {
-    if (allMoves(pieces, turn).length == 0) {
+function checkGame(pieces, turn, movelist) {
+    if (allMoves(pieces, turn, movelist).length == 0) {
         let king;
         let checkmate = false
         for (let piece of pieces) {
@@ -64,7 +66,7 @@ function checkGame(pieces, turn) {
         } 
         for (let piece of pieces) {
             if (piece.color != turn) {
-                let moves = piece.moves(pieces, true)
+                let moves = piece.moves(pieces, true, movelist)
                 for (let move of moves) {
                     if (move[0] == king[0] && move[1] == king[1]) {
                         checkmate = true
@@ -80,7 +82,7 @@ function checkGame(pieces, turn) {
         }
     }
 }
-let pieces = fenToBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+let pieces = fenToBoard("rnbqkbnr/pppp1ppp/8/8/4p3/8/PPPPPPPP/RNBQKBNR")
 for (let peice of pieces) {
     drawPiece(peice)
 }
@@ -108,8 +110,8 @@ function highlight(coords) {
 
     }
 }
-function handleMove(move, piece, board, starting, ending) {
-    let newList = move.resolve(piece, board,starting, ending)
+function handleMove(move, piece, board, starting, ending, movelist) {
+    let newList = move.resolve(piece, board,starting, ending, movelist)
     draw()
     for (let piece of newList) {
         drawPiece(piece)
@@ -174,7 +176,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                                         turn = "white"
 
                                     }
-                                    checkGame(pieces, turn)
+                                    checkGame(pieces, turn, movelist)
                                 } else {
                                     console.log(cond2, cond1)
                                 }
@@ -209,7 +211,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                                         turn = "white"
 
                                     }
-                                    checkGame(pieces, turn)
+                                    checkGame(pieces, turn, movelist)
                                 } else {
                                     console.log(cond2, cond1)
                                 }
@@ -248,7 +250,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                                         turn = "white"
 
                                     }
-                                    checkGame(pieces, turn)
+                                    checkGame(pieces, turn, movelist)
                                 } else {
                                     console.log(cond2, cond1)
                                 }
@@ -283,7 +285,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                                         turn = "white"
 
                                     }
-                                    checkGame(pieces, turn)
+                                    checkGame(pieces, turn, movelist)
                                 } else {
                                     console.log(cond2, cond1)
                                 }
@@ -292,7 +294,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                         }
                     }
                 } 
-                for (let coord of piece.moves(pieces, true)) {
+                for (let coord of piece.moves(pieces, true, movelist)) {
                     if (compareCoordinates(coord, coords)&& turn == piece.color ) {
                         let take = false
                         for (let peice of pieces) {
@@ -301,14 +303,18 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                             }
                         }
                         let move = new Move(take ? "capture" : "move")
-                        pieces =  handleMove(move, piece, pieces, piece.coordinates, coords)
+                        if (piece.type == "pawn"  && (!take && piece.coordinates[0] != coord[0])) {
+                            move = new Move("en passant")
+                        }
+                        pieces =  handleMove(move, piece, pieces, piece.coordinates, coords, movelist)
+                        console.log(movelist)
                         if (turn == "white") {
                             turn = "black"
                         } else {
                             turn = "white"
 
                         }
-                        checkGame(pieces, turn)
+                        checkGame(pieces, turn, movelist)
                         console.log(take)
                     }
                 }

@@ -63,18 +63,17 @@ export function fenToBoard(string) {
     }
     return pieces
 }
-export function isCheck(pieces, color) {
+export function isCheck(pieces, color, movelist) {
     let king;
-    console.log(pieces)
     for (let piece of pieces) {
         if (piece.type == "king"  && piece.color == color) {
             king = piece.coordinates
 
         }
     }
-    console.log(pieces)
+    console.log("is check", movelist)
     for (let piece of pieces) {
-        for (let move of piece.moves(pieces)) {
+        for (let move of piece.moves(pieces, false, movelist)) {
             if (move[0] == king[0] && move[1] == king[1]) {
                 return true
             }
