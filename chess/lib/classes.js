@@ -376,12 +376,10 @@ export class Piece {
                 break;
             case "pawn":
                 let pres = []
-                console.log("pawn", movelist)
                 if (Object.keys(movelist.storage).length != 0) {
-                    let moveses = movelist.storage[Object.keys(movelist.storage).length]
+                    let moveses = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
                     let move = moveses[moveses.length - 1]
                     if ((move.moving.color != this.color && move.moving.type == "pawn") && (Math.abs(move.starting[1] - move.ending[1]) == 2) && (Math.abs(this.coordinates[0] - move.ending[0]) == 1) && (move.ending[1] == this.coordinates[1])) {
-                        console.log("en passant possible for", this)
                         pres.push([move.ending[0], (move.ending[1] + move.starting[1]) / 2])
                     }
                 }
@@ -522,10 +520,18 @@ export class Move {
                     found = true
                     movingPiece.move(ending)
                     if (movingPiece.color == "white") {
+                        console.log("adding")
                         movelist.add([this])
+                        movingPiece.move(ending)
                     } else {
-                        let last = movelist.storage[Object.keys(movelist.storage).length]
-                        last.push(this)
+                        let last
+                        if (movelist.storage.length == 0) {
+                             last = ["nonw"]
+                        } else {
+                            last = movelist.storage[Object.keys(movelist.storage).length]
+                            console.log(Object.keys(movelist.storage).length)
+                            last.push(this)
+                        }
                         movelist.storage[Object.keys(movelist.storage).length] = last
                     }
                 }
@@ -537,19 +543,15 @@ export class Move {
         }
         if (this.type == "capture") {
             let captured = undefined
+            this.moving = movingPiece
+            this.starting = starting
+            this.ending = ending
             let newBoard = []
             for (let piece of board) {
                 if (compareCoordinates(piece.coordinates, ending)) {
                     captured = piece.coordinates
-                    console.log("not putting", piece.type, piece.color)
                 } else {
-                    console.log(ending, piece.coordinates)
                     newBoard.push(piece)
-                }
-            }
-            for (let piece of newBoard) {
-                if (compareCoordinates(piece.coordinates, captured)) {
-                    console.log("piece not removed")
                 }
             }
             if (!(typeof(captured) == "undefined")) {
@@ -559,33 +561,25 @@ export class Move {
                         legal = true
                     }
                 }
-                for (let piece of newBoard) {
-                    if (compareCoordinates(piece.coordinates, captured)) {
-                        console.log("piece not removed")
-                    }
-                }
                 if (legal) {
-                    movingPiece.move(ending)
-                    for (let piece of newBoard) {
-                        if (compareCoordinates(piece.coordinates, captured)) {
-                            console.log("piece not removed", piece)
-                        }
+                    if (movingPiece.color == "white") {
+                        console.log("adding")
+                        movelist.add([this])
+                    } else {
+                        let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length -1]]
+                        console.log(movelist)
+                        last.push(this)
+                        movelist.storage[Object.keys(movelist.storage).length] = last
                     }
-                } else {
-                    console.log("illegal capture")
-                }
-            } else {
-                console.log("did not found captured piece")
-                console.log(captured)
-            }
-            for (let piece of newBoard) {
-                if (compareCoordinates(piece.coordinates, captured)) {
-                    console.log("piece not removed", piece)
+                    movingPiece.move(ending)
                 }
             }
          return newBoard
         }
         if (this.type == "castle") {
+            this.moving = movingPiece
+            this.starting = starting
+            this.ending = ending
             if (compareCoordinates(ending, [6,7])) {
                 for (let piece of board) {
                     if (compareCoordinates(piece.coordinates, [4, 7])) {
@@ -622,15 +616,38 @@ export class Move {
                     }
                 }
             }
+            if (movingPiece.color == "white") {
+                    console.log(movelist)
+                    movelist.add([this])
+            } else {
+                console.log(movelist)
+                let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
+                console.log(movelist)
+                last.push(this)
+                movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]] = last
+                }
+            console.log(movelist)
             return board
         }
         if (this.type == "en passant") {
             let newList = []
+            this.moving = movingPiece
+            this.starting = starting
+            this.ending = ending
             for (let piece of board) {
                 if (!(compareCoordinates(piece.coordinates, [ending[0], starting[1]]))) {
                     newList.push(piece)
                 }
             }
+            if (movingPiece.color == "white") {
+                    console.log("adding")
+                    movelist.add([this])
+            } else {
+                let last = movelist.storage[Object.keys(movelist.storage).length]
+                console.log(movelist)
+                last.push(this)
+                movelist.storage[Object.keys(movelist.storage).length] = last
+                }
             movingPiece.move(ending,)
             return newList
         
@@ -642,6 +659,7 @@ export class MoveList {
         this.storage = {}
     }
     add(pair) {
+        console.log("adding move")
         this.storage[Object.keys(this.storage).length + 1]  = pair
     }
 }
