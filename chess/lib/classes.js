@@ -8,7 +8,7 @@ export class Piece {
         this.toggled = false
         this.hasMoved = false
     }
-    moves(pieces, check, movelist) {
+    moves(pieces, check, movelist, depth) {
         switch(this.type) {
             case "king" :
                 let olist = []
@@ -150,7 +150,7 @@ export class Piece {
                         for (let piece of predicte) {
                             if (piece.coordinates[0] == moves[0] && piece.coordinates[1] == moves[1]) {
                             }else {
-                                    for (let move of piece.moves(predicte, false, movelist)) {
+                                    for (let move of piece.moves(predicte, false, movelist, depth + 1)) {
                                         if (move[0] == king[0] && move[1] == king[1]) {
                                             threath = true
                                         }
@@ -236,9 +236,16 @@ export class Piece {
 
                     y--;
                 }
+                for (let move of moves) {
+                    for (let piece of pieces) {
+                        if (piece.type == "king" && compareCoordinates(move, piece)) {
+                            console.log("tried to eat king")
+                        }
+                    }
+                }
                 if (check) {
                     let predicte = []
-                    let king;
+                    let king = undefined;
                     for (let piece of pieces) {
                         if (!(piece.coordinates[0] == this.coordinates[0] &&  piece.coordinates[1] == this.coordinates[1])) {
                             predicte.push(piece)
@@ -247,6 +254,9 @@ export class Piece {
                             }
                         }
                     }
+                    if (typeof(king) == "undefined") {
+                        console.log("king not found at depth",depth)
+                    }
                     let newLis = []
                     for (let movea of moves) {
                         let threath = false
@@ -254,7 +264,7 @@ export class Piece {
                         for (let piece of predicte) {
                             if (piece.coordinates[0] == movea[0] && piece.coordinates[1] == movea[1]) {
                             }else {
-                                    for (let move of piece.moves(predicte, false, movelist)) {
+                                    for (let move of piece.moves(predicte, false, movelist, depth + 1)) {
                                         if (move[0] == king[0] && move[1] == king[1]) {
                                             threath = true
                                         }
@@ -275,7 +285,7 @@ export class Piece {
                 return moves
                 break;
             case "queen":
-                let moven =  [new Piece("rook", this.color, this.coordinates).moves(pieces, false, movelist), new Piece("bishop", this.color, this.coordinates).moves(pieces, false, movelist)].flat()
+                let moven =  [new Piece("rook", this.color, this.coordinates).moves(pieces, false, movelist, depth + 1), new Piece("bishop", this.color, this.coordinates).moves(pieces, false, movelist, depth + 1)].flat()
                 if (check) {
                     let predicte = []
                     let king;
@@ -294,7 +304,7 @@ export class Piece {
                         for (let piece of predicte) {
                             if (piece.coordinates[0] == movea[0] && piece.coordinates[1] == movea[1]) {
                             }else {
-                                    for (let move of piece.moves(predicte, false, movelist)) {
+                                    for (let move of piece.moves(predicte, false, movelist, depth + 1)) {
                                         if (move[0] == king[0] && move[1] == king[1]) {
                                             threath = true
                                         }
@@ -354,7 +364,7 @@ export class Piece {
                         for (let piece of predicte) {
                             if (piece.coordinates[0] == movea[0] && piece.coordinates[1] == movea[1]) {
                             }else {
-                                    for (let move of piece.moves(predicte, false, movelist)) {
+                                    for (let move of piece.moves(predicte, false, movelist, depth + 1)) {
                                         if (move[0] == king[0] && move[1] == king[1]) {
                                             threath = true
                                         }
@@ -472,7 +482,7 @@ export class Piece {
                         for (let piece of predicte) {
                             if (piece.coordinates[0] == movea[0] && piece.coordinates[1] == movea[1]) {
                             }else {
-                                    for (let move of piece.moves(predicte, false, movelist)) {
+                                    for (let move of piece.moves(predicte, false, movelist, depth + 1)) {
                                         if (move[0] == king[0] && move[1] == king[1]) {
                                             threath = true
                                         }
@@ -515,7 +525,7 @@ export class Move {
             this.moving = movingPiece
             this.starting = starting
             this.ending = ending
-            let moves = movingPiece.moves(board,true, movelist) 
+            let moves = movingPiece.moves(board,true, movelist, 0) 
     
             for (let move of moves) {
                 if (compareCoordinates(move, ending)) {
@@ -533,28 +543,26 @@ export class Move {
                                 last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
                                 last.push(this)
                             }
-                            movingPiece.move(ending)
-                            console.log("moved", movingPiece.type,"to",movingPiece.coordinates)
                             movelist.add(last)
                         }
-                    } else {
-                        if (movingPiece.color == "black") {
-                            console.log("blocked by movelist")
-                        }
+                    }
+                    if (movingPiece.type == "king") {
+                        console.log("moving king")
                     }
                 }
             }
             if (!found) {
                 console.log("illegal", this)
             }
-            console.log(board)
             let checkedBoard = []
+            /*
             for (let piece of board) {
                 if (!compareCoordinates(piece.coordinates, this.starting)) {
                     checkedBoard.push(piece)
                 }
             }
-            return checkedBoard
+                */
+            return board
         }
         if (this.type == "capture") {
             let captured = undefined
@@ -571,7 +579,7 @@ export class Move {
             }
             if (!(typeof(captured) == "undefined")) {
                 let legal = false
-                for (let move of movingPiece.moves(board, true, movelist)) {
+                for (let move of movingPiece.moves(board, true, movelist, 0)) {
                     if (compareCoordinates(move, ending)) {
                         legal = true
                     }

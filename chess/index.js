@@ -8,6 +8,7 @@ let blackLoaded = false
 let whiteLoaded = false
 let black = new Image(80 ,80)
 let movelist = new MoveList()
+let spreadsheets = await(await fetch("./assets/values.json")).json()
 black.onload= () => {
     blackLoaded = true
     if (whiteLoaded) {
@@ -39,7 +40,7 @@ export function allMoves(pieces, color, movelist) {
     let moves = []
     for (let pezzo of pieces) {
         if (pezzo.color == color) {
-            let all = pezzo.moves(pieces, true, movelist)
+            let all = pezzo.moves(pieces, true, movelist, 0)
             for (let move of all) {
                 let newMove = new Move()
                 newMove.setType(pieces, move, pezzo)
@@ -71,7 +72,7 @@ export function checkGame(pieces, turn, movelist) {
         } 
         for (let piece of pieces) {
             if (piece.color != turn) {
-                let moves = piece.moves(pieces, true, movelist)
+                let moves = piece.moves(pieces, true, movelist, 0)
                 for (let move of moves) {
                     if (move[0] == king[0] && move[1] == king[1]) {
                         checkmate = true
@@ -87,7 +88,7 @@ export function checkGame(pieces, turn, movelist) {
         }
     }
 }
-let position = "2kr1b1r/pppq2pp/2n1b3/3pPp2/3P4/2PB1Q2/P1P1N1PP/R1B1K2R w KQ - 5 11"
+let position = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 let result = fenToBoard(position, movelist)
 let pieces = result[0]
 let turn = result[1]
@@ -134,7 +135,6 @@ function handleClick(x, y) {
 document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
     if (turn == "white") {
         console.log("white")
-        console.log(movelist)
         let coords = handleClick(e.clientX, e.clientY)
 
         for (let piece of pieces) {
@@ -240,7 +240,7 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
                             }
                         }
                     } 
-                    for (let coord of piece.moves(pieces, true, movelist)) {
+                    for (let coord of piece.moves(pieces, true, movelist, 0)) {
                         if (compareCoordinates(coord, coords)&& turn == piece.color ) {
                             let take = false
                             for (let peice of pieces) {
@@ -270,11 +270,10 @@ document.getElementsByTagName("body")[0].addEventListener("click", (e) => {
     } else {
         checkGame(pieces, "black", movelist)
         movelist.blocked = false
-        let result = getBestMove(pieces, "black", movelist)
+        let result = getBestMove(pieces, "black", movelist, spreadsheets)
         let move = result[0]
         console.log(result)
         pieces = handleMove(new Move(move.type), move.moving, pieces, move.starting, move.ending, movelist)
-        console.log(pieces)
         turn = "white"
         checkGame(pieces, "black", movelist)
     }
