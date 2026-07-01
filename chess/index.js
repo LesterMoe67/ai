@@ -87,7 +87,7 @@ export function checkGame(pieces, turn, movelist) {
         }
     }
 }
-let position = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+let position = "2kr1b1r/pppq2pp/2n1b3/3pPp2/3P4/2PB1Q2/P1P1N1PP/R1B1K2R w KQ - 5 11"
 let result = fenToBoard(position, movelist)
 let pieces = result[0]
 let turn = result[1]

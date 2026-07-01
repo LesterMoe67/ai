@@ -264,10 +264,12 @@ export function BoardToFen(pieces, movelist, turn) {
         string += "-"
     }
     let moves = 0
-    let index = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]].length - 1
+    if (Object.keys(movelist.storage).length > 0) {
+    console.log(movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]])
+        let index = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]].length - 1
     let Cmove = Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]
     let move = movelist.storage[Cmove][index]
-    while (!((move.moving.type == "pawn" ) || move.type == "capture") && (Cmove >= 0)) {
+    while (!((move.moving.type == "pawn" ) || move.type == "capture") && (Cmove >= 1)) {
         moves ++
         if (index == 1) {
             index --
@@ -275,11 +277,43 @@ export function BoardToFen(pieces, movelist, turn) {
             index ++
             Cmove--
         }
+        if (Cmove >= 1) {
          move = movelist.storage[Cmove][index]
+        }
+    }
     }
     string += " " + moves + " " + (turn == "white" ? Object.keys(movelist.storage).length +1 : Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1])
     return string
 }
+export function phaseCount(pieces, color) {
+    let score = 0
+    for (let piece of pieces) {
+        if(piece.color == color) {
+            switch(piece.type) {
+                case "queen" :
+                    score += 4
+                    break;
+                case "rook" :
+                    score += 2
+                    break;
+                case "bishop":
+                    score += 1
+                    break;
+                case "knight":
+                    score += 1
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    return score
+}
+export function phase(pieces) {
+    let phaseScore = phaseCount(pieces, "white") + phaseCount(pieces, "black")
+    return Math.round((24-phaseScore)/12)
+}
+    
 export function isCheck(pieces, color, movelist) {
     let king;
     for (let piece of pieces) {
@@ -296,6 +330,15 @@ export function isCheck(pieces, color, movelist) {
         }
     }
     return false
+}
+export function positionalScore(spreadsheets,pieces, color) {
+    let score = 0
+    for (let piece of pieces) {
+        if (piece.color == color) {
+            score += spreadsheets[Object.keys(spreadsheets)[phase(pieces)]][piece.type][piece.coordinates[1]][(color == "white" ? (7 - piece.coordinates[0]) : piece.coordinates[0])]
+        }
+    }
+    return score
 }
 export function countPieces(color, pieces) {
     let value = 0
@@ -372,7 +415,7 @@ export function evaluateBoard(pieces, movelist) {
     let whiteMaterial = countPieces("white", pieces)
     let blackMaterial = countPieces("black", pieces) 
     let whiteMobility = allMoves(pieces, "white", movelist).length
-    let blackMobility = allMoves(pieces, "white", movelist).length
+    let blackMobility = allMoves(pieces, "black", movelist).length
     let whitepawns = evaluatePawns(pieces, "white")
     let blackPawns = evaluatePawns(pieces, "black")
     let whiteBishops = 0
@@ -382,7 +425,7 @@ export function evaluateBoard(pieces, movelist) {
             if (piece.color == "white") {
                 whiteBishops ++
             } else {
-                blackBishops
+                blackBishops ++
             }
         }
     }
