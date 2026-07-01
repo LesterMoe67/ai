@@ -1,4 +1,4 @@
-import {Board, Sqaure, Piece} from "./lib/classes.js"
+import {Board, Sqaure, Piece, Move, Transport} from "./lib/classes.js"
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 let xOffset = 1920/2 - 80*8/4*3
@@ -21,18 +21,6 @@ white.onload = () => {
     }
 }
 white.src = "./assets/white-tile.png"
-
-let board = new Board()
-board.standard()
-export function drawPiece(piece) {
-    let img = new Image()
-    img.onload = () => {
-        ctx.drawImage(img, piece.coordinates[0]*80 + xOffset, piece.coordinates[1]*80 + yOffset)
-
-    }
-    img.src = "./assets/" + piece.color + "-" + piece.type + ".png"
-}
-
 function highlight(coords) {
     let occupied = undefined
     for (let piece of pieces) {
@@ -69,3 +57,10 @@ function handleClick(x, y) {
         }
     }
 }
+let board = new Board()
+board.standard()
+
+let test = new Move(new Piece("pawn", "white"), [0, 6], [0, 4])
+let test2 = new Move(new Piece("pawn", "white"), [0, 4], [0, 2])
+board = new Transport([test, test2]).resolve(board)
+board.render(xOffset, yOffset, ctx, black, white)

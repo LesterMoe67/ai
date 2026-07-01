@@ -4,6 +4,49 @@ export class Piece {
         this.color = color
     }
 }
+export class Move {
+    constructor(piece,starting, ending) {
+        this.piece = piece
+        this.ending = ending
+        this.starting = starting
+    }
+}
+export function compareCoordinates(coord1, coord2) {
+    return (coord1[0] == coord2[0] && coord1[1] == coord2[1])
+}
+export function comparePiece(piece1, piece2, coord1, coord2) {
+    return (piece1.type == piece2.type && piece1.color ==piece2.color) && compareCoordinates(coord1, coord2)
+}
+export class Transport {
+    constructor (moves) {
+        this.moves = moves
+    }
+    resolve(board) {
+        let reference = board.copy()
+        for (let move of this.moves) {
+            let newBoard = new Board()
+            for (let y = 0; y < 8; y++) {
+                for (let x = 0; x< 8; x++) {
+                    if (typeof(reference.rows[y][x].piece) !== "undefined") {
+                        let ref = reference.rows[y][x].piece
+                        if (comparePiece(ref, move.piece, [y,x], move.starting)) {
+                            console.log("spawned", move.ending)
+                            newBoard.spawn(new Piece(ref.type, ref.color), [move.ending[1], move.ending[0]])
+                        } else if (compareCoordinates([y,x], move.ending)) {
+                            console.log([x, y])
+                        } else {
+                            newBoard.spawn(new Piece(ref.type, ref.color), [x, y])
+                        }
+
+                    }
+                }
+            }
+            reference = newBoard.copy()
+        }
+        return reference
+    }
+
+}
 export class Sqaure {
     constructor (color, piece) {
         this.color = color
@@ -97,5 +140,13 @@ export class Board  {
                 }
             }
         }
+    } copy() {
+        let copy = new Board()
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                copy.rows[y][x] = this.rows[y][x]
+            }
+        }
+        return copy
     }
 }
