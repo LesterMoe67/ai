@@ -1,5 +1,5 @@
-import { compareCoordinates, Piece, Move } from "./classes.js"
-
+import { compareCoordinates, Piece, Move, MoveList } from "./classes.js"
+import { allMoves, draw, checkGame, drawPiece } from "../index.js"
 export function fenPositionToBoard(string) {
     let rows = string.split("/")
     let pieces = []
@@ -130,7 +130,7 @@ export function fenToBoard(string, movelist) {
         fake.ending = [9,9]
         fake.moving = new Piece(undefined, undefined, undefined)
         fake.starting = [9,9]
-        move.resolve(new Piece("pawn", moving.color, starting), [], starting, moving.coordinates, {"storage" : []})
+        move.resolve(new Piece("pawn", moving.color, starting), [], starting, moving.coordinates, new MoveList())
         
         if (turn == "white") {
             movelist.storage[(string.split(" ")[5] - 1).toString()] = [new Move("move"), move]
@@ -180,7 +180,6 @@ export function BoardToFen(pieces, movelist, turn) {
     string.pop()
     string.reverse()
     string = string.join("")
-    console.log(Object.keys(movelist.storage).length)
     string += " " + (turn == "white" ? "b" : "w") + " "
     pieces = pieces.reverse()
     let nulled = true
@@ -269,7 +268,6 @@ export function BoardToFen(pieces, movelist, turn) {
     let Cmove = Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]
     let move = movelist.storage[Cmove][index]
     while (!((move.moving.type == "pawn" ) || move.type == "capture") && (Cmove >= 0)) {
-        console.log(move.moving)
         moves ++
         if (index == 1) {
             index --
@@ -280,8 +278,7 @@ export function BoardToFen(pieces, movelist, turn) {
          move = movelist.storage[Cmove][index]
     }
     string += " " + moves + " " + (turn == "white" ? Object.keys(movelist.storage).length +1 : Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1])
-
-    console.log(string)
+    return string
 }
 export function isCheck(pieces, color, movelist) {
     let king;
@@ -299,5 +296,146 @@ export function isCheck(pieces, color, movelist) {
         }
     }
     return false
+}
+export function countPieces(color, pieces) {
+    let value = 0
+    for (let piece of pieces) {
+        if (piece.color == color) {
+            switch (piece.type) {
+                case "pawn" : 
+                    value += 100
+                    break;
+                case "bishop" :
+                    value += 330
+                    break;
+                case "knight":
+                    value += 320
+                    break;
+                case "king":
+                    value += 500000
+                    break;
+                case  "queen":
+                    value += 900
+                    break;
+                case "rook":
+                    value += 500
+                    break;
+            }
+        }
+    }
+    return value
+}
+export function evaluatePawns(pieces, color) {
+    let score = 0
+    for (let piece of pieces) {
+        if (piece.type == "pawn" && piece.color == color) {
+            let passed = true
+            let isolated = true
+            let defendedByPawn = false
+            for (let next of pieces) {
+                if (next.type =="pawn") {
+                    if (next.color!= color&& next.coordinates[1] == piece.coordinates[1]) {
+                        passed = false
+                    }
+                    if (next.color == color && Math.abs(piece.coordinates[0] - next.coordinates[0]) == 1) {
+                        isolated = false
+                    }
+                    if (next.color == color &&  (compareCoordinates(next, [piece.coordinates[0] + 1, piece.coordinates[1] - 1]) || compareCoordinates(next, [piece.coordinates[0] - 1, piece.coordinates[1] - 1]))) {
+                        defendedByPawn = true
+                    }
+                }
+            }
+            if (passed) {
+                score += 30
+            } if (isolated) {
+                score -= 15
+            } if (defendedByPawn) {
+                score += 15
+            }
+        }
+    }
+    return score
+}
+export function handleMove(move, piece, board, starting, ending, movelist) {
+    console.log("handling", piece.color)
+    let newList = move.resolve(piece, board,starting, ending, movelist)
+    draw()
+    for (let piecen of newList) {
+        if (!compareCoordinates(piecen.coordinates, starting))
+        drawPiece(piecen)
+        piecen.toggled = false
+    }
+    return newList
+}
+export function evaluateBoard(pieces, movelist) {
+    let score = 0
+    let whiteMaterial = countPieces("white", pieces)
+    let blackMaterial = countPieces("black", pieces) 
+    let whiteMobility = allMoves(pieces, "white", movelist).length
+    let blackMobility = allMoves(pieces, "white", movelist).length
+    let whitepawns = evaluatePawns(pieces, "white")
+    let blackPawns = evaluatePawns(pieces, "black")
+    let whiteBishops = 0
+    let blackBishops = 0
+    for (let piece of pieces) {
+        if (piece.type == "bishop") {
+            if (piece.color == "white") {
+                whiteBishops ++
+            } else {
+                blackBishops
+            }
+        }
+    }
+    score += whiteMaterial + (whiteMobility * 2) + whitepawns + (whiteBishops == 2 ? 30 : 0)
+    score -= blackMaterial + (blackMobility * 2) + blackPawns + (blackBishops == 2 ? 30 : 0)
+    return score
+}
+export function comparePiece(piece1, piece2) {
+    return (piece1.type == piece2.type) && (piece1.color == piece2.color) && (compareCoordinates(piece1.coordinates, piece2.coordinates))
+}
+export function getBestMove(board, color, movelist) {
+    movelist.block()
+    let moves = allMoves(board, color, movelist)
+    let startCode = BoardToFen(board, movelist, color)
+    let values = []
+    for (let move of moves) {
+        let piece = undefined
+        let boardCopy = fenToBoard(startCode, movelist)[0]
+        for (let pezzo of boardCopy) {
+            let second = move.moving
+            if (comparePiece(pezzo, second)) {
+                piece = new Piece(pezzo.type, pezzo.color, pezzo.coordinates)
+                piece.hasMoved = pezzo.hasMoved
+                piece.toggled = pezzo.toogled
+            }
+        }
+        let movelistCopy = fenToBoard(startCode, movelist)[2]
+        movelistCopy.block()
+        let newPosition = move.resolve(move.moving, boardCopy, move.starting, move.ending, movelistCopy)
+        move.moving.coordinates = move.starting
+        values.push([move, evaluateBoard(newPosition, movelistCopy) * (color == "white" ? 1 : -1)])
+    }
+    let best = values[0]
+    for (let value of values) {
+        if (value[1] > best[1]) {
+            best = value
+        } 
+    }
+    movelist.blocked = false
+    for (let piece of board) {
+        if (comparePiece(piece, best[0].moving)) {
+            best[0].moving = piece
+        }
+    }
+    return best
+}
+export function search(depth, board, color, movelister) {
+    let moves = []
+    let turn = color == "white" ? "white" : "black"
+    for (let i = 0; i <= depth; i++) {
+        if (i == 0) {
+
+        }
+    }
 }
 //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR

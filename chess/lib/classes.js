@@ -507,6 +507,7 @@ export function compareCoordinates(coord1, coord2) {
 export class Move {
     constructor(type) {
         this.type = type
+
     }
     resolve(movingPiece, board, starting, ending, movelist) {
         if (this.type == "move") {
@@ -515,31 +516,45 @@ export class Move {
             this.starting = starting
             this.ending = ending
             let moves = movingPiece.moves(board,true, movelist) 
+    
             for (let move of moves) {
                 if (compareCoordinates(move, ending)) {
                     found = true
                     movingPiece.move(ending)
-                    if (movingPiece.color == "white") {
-                        console.log("adding")
-                        movelist.add([this])
-                        movingPiece.move(ending)
-                    } else {
-                        let last
-                        if (movelist.storage.length == 0) {
-                             last = ["nonw"]
+                    if (!movelist.blocked) {
+                        if (movingPiece.color == "white") {
+                            movelist.add([this])
+                            movingPiece.move(ending)
                         } else {
-                            last = movelist.storage[Object.keys(movelist.storage).length]
-                            console.log(Object.keys(movelist.storage).length)
-                            last.push(this)
+                            let last
+                            if (Object.keys(movelist.storage).length == 0) {
+                                last = ["nonw"]
+                            } else {
+                                last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
+                                last.push(this)
+                            }
+                            movingPiece.move(ending)
+                            console.log("moved", movingPiece.type,"to",movingPiece.coordinates)
+                            movelist.add(last)
                         }
-                        movelist.storage[Object.keys(movelist.storage).length] = last
+                    } else {
+                        if (movingPiece.color == "black") {
+                            console.log("blocked by movelist")
+                        }
                     }
                 }
             }
             if (!found) {
-                console.log("illegal move")
+                console.log("illegal", this)
             }
-            return board
+            console.log(board)
+            let checkedBoard = []
+            for (let piece of board) {
+                if (!compareCoordinates(piece.coordinates, this.starting)) {
+                    checkedBoard.push(piece)
+                }
+            }
+            return checkedBoard
         }
         if (this.type == "capture") {
             let captured = undefined
@@ -562,14 +577,15 @@ export class Move {
                     }
                 }
                 if (legal) {
-                    if (movingPiece.color == "white") {
-                        console.log("adding")
-                        movelist.add([this])
-                    } else {
-                        let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length -1]]
-                        console.log(movelist)
-                        last.push(this)
-                        movelist.storage[Object.keys(movelist.storage).length] = last
+                    if (!movelist.blocked) {
+                        if (movingPiece.color == "white") {
+                            movelist.add([this])
+                        } else {
+                            let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length -1]]
+                            last.push(this)
+                            movelist.remove()
+                            movelist.add(last)
+                        }
                     }
                     movingPiece.move(ending)
                 }
@@ -616,17 +632,17 @@ export class Move {
                     }
                 }
             }
-            if (movingPiece.color == "white") {
-                    console.log(movelist)
-                    movelist.add([this])
-            } else {
-                console.log(movelist)
-                let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
-                console.log(movelist)
-                last.push(this)
-                movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]] = last
+            if (!movelist.blocked) {
+
+                if (movingPiece.color == "white") {
+                        movelist.add([this])
+                } else {
+                    let last = movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
+                    last.push(this)
+                    movelist.remove()
+                    movelist.add(last)
                 }
-            console.log(movelist)
+            }
             return board
         }
         if (this.type == "en passant") {
@@ -639,18 +655,51 @@ export class Move {
                     newList.push(piece)
                 }
             }
-            if (movingPiece.color == "white") {
-                    console.log("adding")
-                    movelist.add([this])
-            } else {
-                let last = movelist.storage[Object.keys(movelist.storage).length]
-                console.log(movelist)
-                last.push(this)
-                movelist.storage[Object.keys(movelist.storage).length] = last
-                }
-            movingPiece.move(ending,)
+            if ((!movelist.blocked) ) {
+                if (movingPiece.color == "white") {
+                        movelist.add([this])
+                } else {
+                    let last =  movelist.storage[Object.keys(movelist.storage)[Object.keys(movelist.storage).length - 1]]
+                    last.push(this)
+                    movelist.remove()
+                    movelist.add(last)
+                    
+            }
+            }
+            movingPiece.move(ending)
             return newList
         
+        }
+    } setType(board, ending, moving) {
+        if (moving.type == "king" && Math.abs(moving.coordinates[0] - ending[0]) == 2) {
+            this.type = "castle"
+        } 
+        if (moving.type == "pawn" && Math.abs(moving.coordinates[0] - ending[0]) == 1 && Math.abs(moving.coordinates[1] - ending[1]) == 1) {
+            let occupied = false
+            for (let piece of board) {
+                if (compareCoordinates(ending, piece.coordinates) ) {
+                    occupied = true
+                }
+            }
+            if (occupied) {
+                this.type = "capture"
+                
+            } else {
+                this.type = "en passant"
+            }
+        }
+        else {
+            let occupied = false
+            for (let piece of board) {
+                if (compareCoordinates(ending, piece.coordinates)) {
+                    occupied = true
+                }
+            }
+            if (occupied) {
+                this.type = "capture"
+            } else {
+                this.type = "move"
+            }
         }
     }
 }
@@ -659,7 +708,26 @@ export class MoveList {
         this.storage = {}
     }
     add(pair) {
-        console.log("adding move")
-        this.storage[Object.keys(this.storage).length + 1]  = pair
+        if (!this.blocked) {
+            this.storage[Object.keys(this.storage).length + 1]  = pair
+        }
+    }
+    block() {
+        this.blocked = true
+        console.log("blocked")
+    }
+    remove() {
+        if (Object.keys(this.storage).length > 0) {
+            let s = []
+            let obj = {}
+            for (let key of Object.keys(this.storage)) {
+                s.push([key, this.storage[key]])
+            }
+            s.pop()
+            for (let el of s) {
+                obj[el[0]] = el[1]
+            }
+            this.storage = obj 
+        }       
     }
 }
